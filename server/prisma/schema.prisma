@@ -1,0 +1,797 @@
+// ============================================================
+// 尚格放心装肥西店 - 数据库 Schema (MVP 35张表)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 组织架构
+// ============================================================
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  departments Department[]
+  users      User[]
+  customers  Customer[]
+  appointments Appointment[]
+  @@map("stores")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String
+  type      DepartmentType @default(OTHER)
+  parentId  String?
+  storeId   String?
+  managerId String?
+  createdAt DateTime @default(now())
+
+  parent   Department?  @relation("DepartmentTree", fields: [parentId], references: [id])
+  children Department[] @relation("DepartmentTree")
+  store    Store?       @relation(fields: [storeId], references: [id])
+  manager  User?        @relation("DepartmentManager", fields: [managerId], references: [id])
+
+  users      User[]
+  customers  Customer[]
+  @@map("departments")
+}
+
+enum DepartmentType {
+  MARKETING   // 市场部
+  DESIGN      // 设计部
+  IP          // IP部
+  FINANCE     // 财务部
+  ENGINEERING // 工程部
+  HR          // 人事部
+  ADMIN       // 综合部
+  GM          // 总经办
+  OTHER
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  phone        String    @unique
+  email        String?
+  passwordHash String
+  avatar       String?
+  departmentId String?
+  role         Role      @default(SALES)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  // 客户归属
+  createdCustomers    Customer[] @relation("CustomerCreator")
+  ownedCustomers      Customer[] @relation("CustomerOwner")
+  marketCustomers     Customer[] @relation("MarketOwner")
+  designCustomers     Customer[] @relation("DesignOwner")
+  dealCustomers       Customer[] @relation("DealOwner")
+  coDesignCustomers   Customer[] @relation("CoDesigner")
+
+  // 跟进记录
+  followUps    FollowUp[]
+
+  // 预约/接待
+  invitedAppointments  Appointment[] @relation("AppointmentInviter")
+  hostedAppointments   Appointment[] @relation("AppointmentHost")
+  visitRecords         VisitRecord[]
+
+  // 量房
+  measurements         MeasurementRecord[]
+
+  // 方案
+  proposals            DesignProposal[]
+
+  // 合同
+  contracts            Contract[]
+
+  // 收款
+  payments             Payment[]
+
+  // 施工
+  managedProjects      ConstructionRecord[]
+
+  // 售后
+  handledTickets       AfterSalesTicket[]
+
+  // 配置操作人
+  configUpdates        SystemConfig[] @relation("ConfigUpdater")
+  businessRuleUpdates  BusinessRuleConfig[] @relation("BusinessRuleUpdater")
+  activityLogs         ActivityLog[]
+
+  // 通知
+  notifications        Notification[]
+
+  @@map("users")
+}
+
+enum Role {
+  GM           // 总经理
+  VP           // 副总/运营总
+  DIRECTOR     // 事业部总监
+  MARKET_MGR   // 市场经理
+  DESIGN_MGR   // 设计经理
+  SALES        // 销售/市场人员
+  DESIGNER     // 设计师
+  RECEPTIONIST // 客服/前台
+  FINANCE      // 财务
+  PM           // 项目经理
+}
+
+// ============================================================
+// CRM 字典表
+// ============================================================
+
+model CustomerTag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#FA8C16")
+  createdAt DateTime @default(now())
+
+  customers CustomerTagRelation[]
+  @@map("customer_tags")
+}
+
+model CustomerSourceConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("customer_source_configs")
+}
+
+model CustomerStageConfig {
+  id        String   @id @default(uuid())
+  name      String
+  code      String   @unique
+  sortOrder Int      @default(0)
+  color     String   @default("#8C8C8C")
+  createdAt DateTime @default(now())
+
+  @@map("customer_stage_configs")
+}
+
+model IntentLevelConfig {
+  id        String   @id @default(uuid())
+  name      String   // A / B / C / D
+  color     String   @default("#8C8C8C")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("intent_level_configs")
+}
+
+model RenovationTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("renovation_type_configs")
+}
+
+model HouseStatusConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("house_status_configs")
+}
+
+model BudgetRangeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  minAmount Float?
+  maxAmount Float?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("budget_range_configs")
+}
+
+model DecorationStyleConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("decoration_style_configs")
+}
+
+model FollowUpMethodConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("follow_up_method_configs")
+}
+
+model ChurnReasonConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("churn_reason_configs")
+}
+
+model PostponeReasonConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("postpone_reason_configs")
+}
+
+model ConstructionNodeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  sortOrder Int      @default(0)
+  color     String   @default("#8C8C8C")
+  createdAt DateTime @default(now())
+
+  @@map("construction_node_configs")
+}
+
+model AfterSalesIssueTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("after_sales_issue_type_configs")
+}
+
+model AfterSalesStatusConfig {
+  id        String   @id @default(uuid())
+  name      String
+  sortOrder Int      @default(0)
+  color     String   @default("#8C8C8C")
+  createdAt DateTime @default(now())
+
+  @@map("after_sales_status_configs")
+}
+
+model PaymentMethodConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("payment_method_configs")
+}
+
+model PaymentTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("payment_type_configs")
+}
+
+model ExpenseTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("expense_type_configs")
+}
+
+model ProductTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("product_type_configs")
+}
+
+model PackageTypeConfig {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("package_type_configs")
+}
+
+// ============================================================
+// 业务规则与系统参数
+// ============================================================
+
+model BusinessRuleConfig {
+  id          String   @id @default(uuid())
+  ruleKey     String   @unique
+  ruleName    String
+  ruleValue   Json     // { days: 7, minFollowUps: 2 }
+  description String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  updatedBy User? @relation("BusinessRuleUpdater", fields: [updatedById], references: [id])
+  @@map("business_rule_configs")
+}
+
+model SystemConfig {
+  id          String   @id @default(uuid())
+  configKey   String   @unique
+  configValue String   @db.Text
+  description String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  updatedBy User? @relation("ConfigUpdater", fields: [updatedById], references: [id])
+  @@map("system_configs")
+}
+
+// ============================================================
+// 客户核心
+// ============================================================
+
+model Customer {
+  id               String    @id @default(uuid())
+  name             String
+  phone            String
+  wechat           String?
+  idNumber         String?
+  gender           Gender?
+  age              Int?
+
+  // 房屋信息
+  communityName    String?
+  houseAddress     String?
+  houseArea        Float?
+  houseType        String?    // 2室1厅/3室2厅/...
+  renovationType   String?
+  houseStatus      String?
+  decorationTime   DateTime?
+
+  // 预算与偏好
+  expectedBudget   Float?
+  budgetRange      String?
+  decorationStyle  String?
+  specialRequirement String?
+
+  // 来源与归属
+  source           String?
+  sourceDetail     String?
+  referrerName     String?
+  referrerPhone     String?
+  createdById      String?
+  currentOwnerId   String?
+  marketOwnerId    String?
+  designOwnerId    String?
+  dealOwnerId      String?
+  coDesignerId     String?
+  storeId          String?
+  deptId           String?
+
+  // 客户分级
+  intentLevel      String    @default("C")
+  stage            String    @default("LEAD")
+
+  // 保护与分配
+  protectionEndDate DateTime?
+  assignedAt       DateTime?
+  assignedById     String?
+  firstContactAt   DateTime?
+
+  // 状态标记
+  isSigned         Boolean   @default(false)
+  isLost           Boolean   @default(false)
+  lostReason       String?
+  lostAt           DateTime?
+  isOldCustomer    Boolean   @default(false)
+  canRefer         Boolean   @default(false)
+
+  // 时间戳
+  lastFollowUpAt   DateTime?
+  nextFollowUpAt   DateTime?
+  remark           String?    @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // 关联
+  store            Store?       @relation(fields: [storeId], references: [id])
+  department       Department?   @relation(fields: [deptId], references: [id])
+  createdBy        User?        @relation("CustomerCreator", fields: [createdById], references: [id])
+  currentOwner     User?        @relation("CustomerOwner", fields: [currentOwnerId], references: [id])
+  marketOwner      User?        @relation("MarketOwner", fields: [marketOwnerId], references: [id])
+  designOwner      User?        @relation("DesignOwner", fields: [designOwnerId], references: [id])
+  dealOwner        User?        @relation("DealOwner", fields: [dealOwnerId], references: [id])
+  coDesigner       User?        @relation("CoDesigner", fields: [coDesignerId], references: [id])
+
+  tags             CustomerTagRelation[]
+  stageLogs        CustomerStageLog[]
+  followUps        FollowUp[]
+  appointments     Appointment[]
+  visitRecords     VisitRecord[]
+  measurements     MeasurementRecord[]
+  proposals        DesignProposal[]
+  contract         Contract?
+  churnRecord      ChurnRecord?
+  constructionRecord ConstructionRecord?
+  afterSalesTickets AfterSalesTicket[]
+  referralRecords  ReferralRecord[] @relation("ReferrerRecords")
+  referredRecords  ReferralRecord[] @relation("ReferredRecords")
+
+  @@unique([phone])
+  @@map("customers")
+}
+
+enum Gender {
+  男
+  女
+}
+
+model CustomerTagRelation {
+  customerId String
+  tagId      String
+
+  customer CustomerTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  customer Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, tagId])
+  @@map("customer_tag_relations")
+}
+
+model CustomerStageLog {
+  id         String   @id @default(uuid())
+  customerId String
+  fromStage  String?
+  toStage    String
+  operatorId String?
+  remark     String?
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@map("customer_stage_logs")
+}
+
+// ============================================================
+// 跟进与预约
+// ============================================================
+
+model FollowUp {
+  id                String    @id @default(uuid())
+  customerId        String
+  followUpAt        DateTime
+  followerId        String
+  method            String?
+  content           String    @db.Text
+  customerFeedback  String?   @db.Text
+  customerPainPoint String?
+  customerFocus     String?
+  customerObjection String?
+  nextAction        String?
+  nextFollowUpAt    DateTime?
+  attachments      Json?     // string[]
+  createdAt         DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  follower User     @relation(fields: [followerId], references: [id])
+
+  @@map("follow_ups")
+}
+
+model Appointment {
+  id               String    @id @default(uuid())
+  customerId       String
+  appointmentTime  DateTime
+  storeId          String?
+  inviterId        String
+  hostId           String?
+  isArrived        Boolean   @default(false)
+  noShowReason     String?
+  rescheduledTime  DateTime?
+  remark           String?
+  createdAt        DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  store    Store?   @relation(fields: [storeId], references: [id])
+  inviter  User     @relation("AppointmentInviter", fields: [inviterId], references: [id])
+  host     User?    @relation("AppointmentHost", fields: [hostId], references: [id])
+
+  @@map("appointments")
+}
+
+model VisitRecord {
+  id                   String    @id @default(uuid())
+  customerId           String
+  visitTime            DateTime
+  hostDesignerId       String
+  duration             Int?      // 分钟
+  customerRequirement  String?   @db.Text
+  customerFocus        String?
+  result               String?
+  enterMeasurement     Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  hostDesigner User     @relation(fields: [hostDesignerId], references: [id])
+
+  @@map("visit_records")
+}
+
+// ============================================================
+// 量房与方案
+// ============================================================
+
+model MeasurementRecord {
+  id                  String    @id @default(uuid())
+  customerId          String
+  measureTime         DateTime
+  measureAddress      String
+  measurerId          String
+  isCompleted         Boolean   @default(false)
+  floorPlanFiles      Json?     // string[]
+  sitePhotos          Json?     // string[]
+  customerRequirement String?   @db.Text
+  remark              String?
+  createdAt           DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  measurer User     @relation(fields: [measurerId], references: [id])
+
+  @@map("measurement_records")
+}
+
+model DesignProposal {
+  id                 String    @id @default(uuid())
+  customerId         String
+  designerId         String
+  submittedAt        DateTime
+  version            String    @default("v1")
+  quotationAt        DateTime?
+  quotationAmount    Float?
+  discountAmount     Float?
+  finalAmount        Float?
+  customerBudget     Float?
+  quoteStatus        String    @default("未报价")
+  customerFeedback   String?   @db.Text
+  attachments        Json?     // string[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  designer User     @relation(fields: [designerId], references: [id])
+
+  @@map("design_proposals")
+}
+
+// ============================================================
+// 合同与收款
+// ============================================================
+
+model Contract {
+  id               String    @id @default(uuid())
+  customerId       String    @unique
+  signedAt         DateTime
+  contractNo       String    @unique
+  contractAmount   Float
+  depositAmount    Float     @default(0)
+  receivedAmount   Float     @default(0)
+  unpaidAmount     Float     // 计算: contractAmount - receivedAmount
+  paymentStatus    String    @default("未收款")
+  productType      String?
+  packageType      String?
+  houseArea        Float?
+  unitPrice        Float?
+  estimatedProfit  Float?
+  contractFiles    Json?     // string[]
+  financeConfirmed Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  designer User     @relation(fields: [customerId], references: [id]) // placeholder, actual via customer.designOwnerId
+
+  payments         Payment[]
+  constructionRecord ConstructionRecord?
+
+  @@map("contracts")
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  contractId  String
+  customerId  String
+  amount      Float
+  type        String    // 定金/进度款/尾款/增项款
+  method      String?   // 现金/银行转账/微信/支付宝
+  paidAt      DateTime
+  recordedById String
+  remark      String?
+  createdAt   DateTime  @default(now())
+
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recordedBy User     @relation(fields: [recordedById], references: [id])
+
+  @@map("payments")
+}
+
+// ============================================================
+// 流失管理
+// ============================================================
+
+model ChurnRecord {
+  id             String    @id @default(uuid())
+  customerId     String    @unique
+  churnedAt      DateTime
+  churnedStage   String
+  reason         String?
+  competitorName String?
+  canReactivate  Boolean   @default(true)
+  reviewNote     String?   @db.Text
+  operatorId     String?
+  createdAt      DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  @@map("churn_records")
+}
+
+// ============================================================
+// 施工与售后
+// ============================================================
+
+model ConstructionRecord {
+  id                    String    @id @default(uuid())
+  customerId            String    @unique
+  contractId            String    @unique
+  startAt               DateTime?
+  projectManagerId      String?
+  constructionAddress   String?
+  currentStage          String    @default("待开工")
+  expectedEndAt         DateTime?
+  actualEndAt           DateTime?
+  remark                String?   @db.Text
+  customerSatisfaction  Int?      // 1-5
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contract       Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  projectManager User?         @relation(fields: [projectManagerId], references: [id])
+
+  @@map("construction_records")
+}
+
+model AfterSalesTicket {
+  id             String    @id @default(uuid())
+  customerId     String
+  issueType      String
+  description    String    @db.Text
+  submittedAt    DateTime
+  handlerId      String?
+  status         String    @default("待处理")
+  resolution     String?   @db.Text
+  revisitRecord  String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  handler  User?    @relation(fields: [handlerId], references: [id])
+
+  @@map("after_sales_tickets")
+}
+
+// ============================================================
+// 转介绍与关怀
+// ============================================================
+
+model ReferralRecord {
+  id                  String    @id @default(uuid())
+  referrerCustomerId  String
+  referredCustomerId  String
+  referredAt          DateTime
+  reward              String?
+  remark              String?
+  createdAt           DateTime  @default(now())
+
+  referrerCustomer Customer @relation("ReferrerRecords", fields: [referrerCustomerId], references: [id], onDelete: Cascade)
+  referredCustomer Customer @relation("ReferredRecords", fields: [referredCustomerId], references: [id], onDelete: Cascade)
+
+  @@map("referral_records")
+}
+
+model HolidayCareRecord {
+  id        String   @id @default(uuid())
+  customerId String
+  holiday   String
+  content   String?  @db.Text
+  method    String?
+  createdAt DateTime @default(now())
+
+  @@map("holiday_care_records")
+}
+
+model RevisitRecord {
+  id              String    @id @default(uuid())
+  customerId      String
+  content         String    @db.Text
+  satisfaction    Int?      // 1-5
+  nextRevisitAt   DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@map("revisit_records")
+}
+
+// ============================================================
+// 系统
+// ============================================================
+
+model CustomerAssignment {
+  id          String   @id @default(uuid())
+  customerId  String
+  fromOwnerId String?
+  toOwnerId   String
+  reason      String?
+  operatorId  String?
+  createdAt   DateTime @default(now())
+
+  @@map("customer_assignments")
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  userId      String
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user User   @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+model Notification {
+  id                 String   @id @default(uuid())
+  userId             String
+  title              String
+  content            String   @db.Text
+  type               String   @default("INFO")
+  isRead             Boolean  @default(false)
+  relatedEntityType  String?
+  relatedEntityId    String?
+  createdAt          DateTime @default(now())
+
+  user User   @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}

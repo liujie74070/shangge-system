@@ -1,0 +1,278 @@
+/* ============================================================
+   尚格放心装 - 全局样式 & CSS Variables
+   Swiss Modernism 2.0 + Flat Design
+   ============================================================ */
+
+:root {
+  /* 品牌色 */
+  --color-primary: #FA8C16;
+  --color-primary-hover: #FF9A2E;
+  --color-primary-active: #D46B08;
+  --color-primary-bg: #FFF7E6;
+  --color-primary-border: #FFB74D;
+
+  /* 中性色 */
+  --color-text: #262626;
+  --color-text-secondary: #8C8C8C;
+  --color-text-tertiary: #BFBFBF;
+  --color-border: #D9D9D9;
+  --color-border-secondary: #F0F0F0;
+  --color-bg-layout: #FAFAFA;
+  --color-bg-container: #FFFFFF;
+
+  /* 功能色 */
+  --color-success: #52C41A;
+  --color-warning: #FAAD14;
+  --color-error: #FF4D4F;
+  --color-info: #1890FF;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02);
+  --shadow-md: 0 6px 16px 0 rgba(0,0,0,0.08), 0 3px 6px -4px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 24px 0 rgba(0,0,0,0.1), 0 4px 8px -2px rgba(0,0,0,0.06);
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease-in-out;
+  --transition-slow: 250ms ease-out;
+
+  /* 侧边栏 */
+  --sidebar-width: 224px;
+  --sidebar-collapsed-width: 80px;
+  --header-height: 56px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-bg-layout);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数字字体 */
+.font-numbers {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-feature-settings: 'tnum';
+}
+
+/* ========== 滚动条美化 ========== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-layout);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ========== 布局 ========== */
+.page-container {
+  padding: 24px;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ========== 卡片 ========== */
+.card {
+  background: var(--color-bg-container);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  transition: box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ========== 按钮动效 ========== */
+button {
+  transition: all var(--transition-normal);
+}
+
+.ant-btn-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(250,140,22,0.25);
+}
+
+.ant-btn-primary:active {
+  background-color: var(--color-primary-active) !important;
+  border-color: var(--color-primary-active) !important;
+  transform: translateY(0);
+}
+
+/* ========== 表格 ========== */
+.ant-table-row:hover td {
+  background-color: var(--color-primary-bg) !important;
+}
+
+/* ========== KPI 卡片 ========== */
+.kpi-card {
+  background: var(--color-bg-container);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-slow), box-shadow var(--transition-slow);
+  cursor: default;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.kpi-trend {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.kpi-trend.up { color: var(--color-success); }
+.kpi-trend.down { color: var(--color-error); }
+
+/* ========== 阶段标签颜色 ========== */
+.stage-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ========== 动画 ========== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+}
+
+/* ========== 登录页特殊样式 ========== */
+.login-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FAFAFA 0%, #F0F0F0 50%, #FFF7E6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(250,140,22,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.login-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  left: -150px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(24,144,255,0.05) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.login-card {
+  width: 400px;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 48px 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== 移动端底部 Tab ========== */
+.bottom-tab-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border-top: 1px solid var(--color-border);
+  z-index: 100;
+  padding: 8px 0;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+
+@media (max-width: 1024px) {
+  .bottom-tab-bar {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .ant-layout-sider {
+    display: none !important;
+  }
+}
